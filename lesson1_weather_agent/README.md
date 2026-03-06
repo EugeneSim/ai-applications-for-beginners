@@ -1,6 +1,6 @@
 # Lesson 1: Your First AI Agent — Weather Assistant
 
-**Lesson 1** of [AI Applications for Beginners](../) (repo root). This folder implements the first lesson of the **AWS Strands course**: a simple but powerful AI agent that answers weather questions using live data from an external API. a simple but powerful AI agent that answers weather questions using live data from an external API.
+**Lesson 1** of [AI Applications for Beginners]. This folder implements the first lesson of the **AWS Strands course**: a simple but powerful AI agent that answers weather questions using live data from an external API. a simple but powerful AI agent that answers weather questions using live data from an external API.
 
 ## Concepts
 
