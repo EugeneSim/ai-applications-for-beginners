@@ -1,0 +1,5 @@
+# AWS Strands SDK with LiteLLM (same as Lesson 1)
+strands-agents[litellm]>=0.1.0
+
+# Load .env so API keys are not hardcoded (optional; .env is gitignored)
+python-dotenv>=1.0.0
