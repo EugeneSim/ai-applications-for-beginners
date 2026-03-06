@@ -1,0 +1,8 @@
+# AWS Strands SDK with LiteLLM (same as Lessons 1–2)
+strands-agents[litellm]>=0.1.0
+
+# Load .env so API keys are not hardcoded (optional; .env is gitignored)
+python-dotenv>=1.0.0
+
+# Pydantic is used for structured output schemas (usually pulled in by strands)
+pydantic>=2.0.0
