@@ -1,0 +1,8 @@
+# AWS Strands SDK with LiteLLM (supports OpenAI, Anthropic, Google, etc.)
+strands-agents[litellm]>=0.1.0
+
+# Community tools: http_request for API calls (e.g. weather)
+strands-agents-tools>=0.2.21
+
+# Load .env so API keys are not hardcoded (optional; .env is gitignored)
+python-dotenv>=1.0.0
