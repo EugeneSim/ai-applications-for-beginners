@@ -1,0 +1,7 @@
+Create a file called notes.txt
+Delete notes.txt
+y
+List all files
+Draft a one-sentence summary of Lesson 5 and submit it for review
+ok
+quit
