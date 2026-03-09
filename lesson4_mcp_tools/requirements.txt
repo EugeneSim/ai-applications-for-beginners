@@ -1,0 +1,8 @@
+# Strands SDK with LiteLLM (same as other lessons)
+strands-agents[litellm]>=0.1.0
+
+# MCP SDK (stdio_client, StdioServerParameters, streamablehttp_client)
+mcp>=1.0.0
+
+# Load .env from repo root (API keys; .env is gitignored)
+python-dotenv>=1.0.0
