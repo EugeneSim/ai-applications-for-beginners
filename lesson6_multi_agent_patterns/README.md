@@ -1,94 +1,154 @@
-# Lesson 6: Orchestrating Multiple Agents
+# Lesson 6: Advanced Multi-Agent Patterns
 
-**Lesson 6** of [AI Applications for Beginners](../). You'll go beyond a single agent and learn how to **compose and orchestrate multiple agents** so they work together toward a goal. This lesson introduces patterns you can use to build more capable systems while keeping responsibilities clear and behaviour predictable.
+**Lesson 6** of [AI Applications for Beginners](../). You'll move beyond a single agent and use four patterns for multi-agent systems: **Agent as Tools**, **Swarm Intelligence**, **Graph-Based Workflows**, and **Workflow Agent**.
 
 ## What You'll Learn
 
-- How to **decompose a task** and assign sub-tasks to specialist agents (supervisor–worker pattern)
-- Using **agents as tools**: one agent invokes another as a tool for specialised work
-- Building **sequential pipelines** where agents run in a fixed order (e.g. draft → review → format)
-- **Conditional routing**: choosing which agent(s) to run based on the request or previous output
-- When to use each pattern and the **trade-offs** (centralised vs decentralised, fixed vs dynamic)
+- **6.1 Agent as Tools**: An orchestrator agent that delegates to specialist workers exposed as `@tool`
+- **6.2 Swarm Intelligence**: Decentralized agents that hand off to each other with no central controller
+- **6.3 Graph-Based Workflows**: A DAG of agents with explicit dependencies and execution order
+- **6.4 Workflow Agent**: Stateful sequential workflows (research pipeline and fact-check) with conditional routing
 
 ## Prerequisites
 
-- Lessons 1–5 (especially agents, tools, sessions, and human-in-the-loop)
-- Python 3.x with dependencies from this lesson
-- `GROQ_API_KEY` in the repo root `.env`
+- Lessons 1–5 (agents, tools, sessions, human-in-the-loop)
+- Python 3.x
+- **API key:** Copy the repo root `.env.example` to `.env` and set `GROQ_API_KEY`. Never commit `.env`.
 
-## Patterns at a Glance
+## Sub-Lessons Overview
 
-| Pattern | Idea | Best for | Trade-off |
-|--------|------|----------|-----------|
-| **Supervisor & workers** | One coordinator breaks the task into steps and delegates to specialist agents | Content pipelines, support triage, research workflows | Clear ownership; coordinator can be a bottleneck |
-| **Agents as tools** | An agent has “tools” that are other agents; it decides when to call them | Research assistants that can “ask the code agent” or “ask the writer” | Flexible; need good tool descriptions so the caller chooses wisely |
-| **Sequential pipeline** | Agents run in a fixed order (A → B → C) with explicit handoffs | Data pipelines, approval flows, repeatable workflows | Predictable and auditable; less adaptive |
-| **Conditional routing** | A router inspects the request (or state) and invokes one or more agents accordingly | Triage, branching workflows, “send to expert” | Adaptive; routing logic must stay simple and maintainable |
+| Part | Topic | Run script | Description |
+|------|--------|------------|-------------|
+| **6.1** | Agent as Tools | `run_6_1.py` | Orchestrator with research, product, and travel assistants as tools |
+| **6.2** | Swarm Intelligence | `run_6_2.py` | Researcher, architect, coder, reviewer hand off via `HANDOFF:id:msg` |
+| **6.3** | Graph-Based Workflows | `run_6_3.py` | DAG: research → analysis & fact_check → report |
+| **6.4** | Workflow Agent | `run_6_4.py` | Researcher → Analyst → Writer; research vs fact-check routing |
 
-## Concepts
+---
 
-| Concept | What it is |
-|--------|------------|
-| **Orchestrator** | An agent or small program that decides *which* agent runs next and passes context (e.g. user message, previous replies). |
-| **Supervisor** | Orchestrator that decomposes a high-level task into sub-tasks and delegates each to a specialist (worker) agent. |
-| **Agent as tool** | Wrapping an agent call in a Strands `@tool` so another agent can “invoke” it by name; the LLM chooses when to use the tool. |
-| **Pipeline** | A fixed sequence of agent (or processing) steps; output of step N is input to step N+1. |
-| **Router** | Logic (agent or code) that chooses which agent(s) to run based on input type, keywords, or structured rules. |
+## 6.1 Agent as Tools
 
-## Sub-Lessons
+**Architecture:** User query → **Orchestrator** → (Research Agent | Product Agent | Travel Agent) → combined response.
 
-| Part | Topic | Description | Complexity | Example use case |
-|------|--------|-------------|------------|------------------|
-| **6.1** | Supervisor & workers | Build a coordinator that breaks a task into steps and delegates to specialist agents (e.g. researcher, writer) | ⭐⭐ | Content creation, support triage |
-| **6.2** | Agents as tools | Implement an agent whose tools are other agents; the main agent decides when to call each specialist | ⭐⭐ | Research assistant with “code” and “writer” tools |
-| **6.3** | Sequential pipeline | Chain agents in a fixed order with clear handoffs (e.g. draft → review → format) | ⭐⭐⭐ | Data pipelines, approval workflows |
-| **6.4** | Conditional routing | Router that picks the right agent(s) based on the user request or previous output | ⭐⭐⭐ | Triage, branching workflows |
+**Key ideas:**
 
-Each part includes runnable code, setup steps, and suggestions for extending the pattern.
+- Worker agents are experts in one domain (research, product recommendations, travel).
+- Each worker is wrapped in a `@tool` so the orchestrator can call it by name.
+- The orchestrator’s system prompt describes when to use each tool and can chain multiple tools.
 
-## Quick Start
-
-From the lesson folder:
+**Run** (from `lesson6_multi_agent_patterns` after `pip install -r requirements.txt`):
 
 ```bash
-cd lesson6_multi_agent_patterns
-pip install -r requirements.txt
+python run_6_1.py "I need hiking boots for a mountain trip"
+python run_6_1.py   # interactive
 ```
 
-Then run the example for the part you’re on (e.g. 6.1):
+**Example use cases:** Simple question (orchestrator answers directly); single delegation (e.g. product or travel); multi-step (e.g. “Plan a hiking trip to Patagonia and recommend waterproof boots” → trip_planning_assistant then product_recommendation_assistant).
+
+**Files:** `agent_as_tools.py` (workers + orchestrator), `run_6_1.py`.
+
+---
+
+## 6.2 Swarm Intelligence
+
+**Architecture:** User task → **Entry-point agent** (e.g. researcher) → dynamic **handoffs** between researcher, architect, coder, reviewer → final solution.
+
+**Key ideas:**
+
+- No central orchestrator; any agent can hand off to another.
+- Handoff protocol: an agent ends its reply with `HANDOFF:agent_id:message` to pass control.
+- `max_handoffs` limits the chain to avoid runaway loops.
+
+**Run:**
 
 ```bash
-python run_supervisor_workers.py
+python run_6_2.py "Outline a simple web API for customer orders"
+python run_6_2.py   # interactive
 ```
 
-Details and one-shot vs interactive usage are in each sub-lesson section below.
+**Example use cases:** Software design (researcher → architect → coder → reviewer); research and report (researcher → analyst → writer → reviewer).
 
-## Demo (6.1 — Supervisor & workers)
+**Files:** `swarm_agents.py` (agents + `run_swarm()`), `run_6_2.py`.
 
-1. **Interactive**  
-   The supervisor agent receives a high-level request (e.g. “Explain how S3 encryption works and give a short example”). It plans steps, then delegates to a “researcher” agent and a “writer” agent, and combines the results.
+---
 
-2. **One-shot**  
-   ```bash
-   python run_supervisor_workers.py "What is IAM and how do I create a user?"
-   ```
+## 6.3 Graph-Based Workflows
 
-*(6.2–6.4 demos will be added as those parts are implemented.)*
+**Architecture:** User task → **DAG entry** (research) → **analysis** and **fact_check** in parallel (both depend on research) → **report** (depends on both) → final result.
+
+**Key ideas:**
+
+- Nodes are agents; edges are dependencies. Execution follows a topological order.
+- Parallelism: analysis and fact_check both run after research; report runs after both.
+- Good for repeatable, auditable pipelines.
+
+**Run:**
+
+```bash
+python run_6_3.py "Impact of AI on healthcare"
+python run_6_3.py   # interactive
+```
+
+**Example use cases:** Research + report; content pipeline (research → writer & fact_check → editor); QA pipeline (requirements → architect & tester → developer → QA).
+
+**Files:** `graph_workflow.py` (`GraphWorkflow`, `build_example_graph()`), `run_6_3.py`.
+
+---
+
+## 6.4 Workflow Agent
+
+**Architecture:** User input → **conditional routing** → either **research workflow** (topic → Researcher → Analyst → Writer) or **fact-check workflow** (claim → Researcher → Analyst → Writer with verdict).
+
+**Key ideas:**
+
+- Same three agents (Researcher, Analyst, Writer); different prompts and flow for “research a topic” vs “fact-check a claim”.
+- Context is passed step by step; full workflow is stateful.
+- Conditional routing: e.g. “fact-check” in input or “Claim:” prefix triggers fact-check.
+
+**Run:**
+
+```bash
+python run_6_4.py "Latest developments in AI safety"
+python run_6_4.py "Claim: OpenAI's GPT-4 was released in March 2023"
+python run_6_4.py   # interactive
+```
+
+**Example use cases:** Research automation; fact-checking claims; structured reports with sources.
+
+**Files:** `workflow_agent.py` (`run_research_workflow`, `run_fact_check_workflow`, `run_workflow`), `run_6_4.py`.
+
+---
+
+## End-to-end test
+
+Run all four patterns with sample inputs (use `--quick` for shorter prompts and faster run):
+
+```bash
+python run_all_e2e.py
+python run_all_e2e.py --quick
+```
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `README.md` | This file — overview, concepts, and sub-lesson plan. |
-| `requirements.txt` | Dependencies (Strands, LiteLLM, python-dotenv). |
-| `run_supervisor_workers.py` | Entrypoint for 6.1: supervisor + worker agents. |
-| `supervisor_agent.py` | Supervisor and worker agent definitions for 6.1. |
-
-*(Additional files for 6.2–6.4 will appear as those sub-lessons are added.)*
+| `_shared.py` | Shared model config; reads `GROQ_API_KEY` from env only |
+| `requirements.txt` | Strands, LiteLLM, python-dotenv |
+| `agent_as_tools.py` | 6.1: workers + orchestrator |
+| `run_6_1.py` | Run 6.1 |
+| `swarm_agents.py` | 6.2: swarm agents + handoff loop |
+| `run_6_2.py` | Run 6.2 |
+| `graph_workflow.py` | 6.3: DAG builder and example graph |
+| `run_6_3.py` | Run 6.3 |
+| `workflow_agent.py` | 6.4: research and fact-check workflows |
+| `run_6_4.py` | Run 6.4 |
+| `run_all_e2e.py` | E2E test: runs 6.1–6.4 with sample inputs |
 
 ## Setup
 
-1. **Virtual environment** (recommended):
+1. **API key (required):** From the repo root, copy `.env.example` to `.env` and set `GROQ_API_KEY`. Do not commit `.env`. See the root [README](../README.md) security section.
+
+2. **Virtual environment** (recommended):
 
    ```bash
    python -m venv .venv
@@ -96,29 +156,33 @@ Details and one-shot vs interactive usage are in each sub-lesson section below.
    # source .venv/bin/activate   # macOS/Linux
    ```
 
-2. **Dependencies** (from this folder):
+3. **Dependencies** (from this folder):
 
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **API key**  
-   Put `GROQ_API_KEY=...` in the **repo root** `.env` file. Do not commit `.env`.
-
 ## Choosing a Pattern
 
-- **Single, open-ended question** → One agent (or agent with many tools) is often enough.
-- **Clear steps (research then write, or draft then review)** → Supervisor & workers or a sequential pipeline.
-- **“Sometimes I need a coder, sometimes a writer”** → Agents as tools, or conditional routing.
-- **Strict, repeatable process (compliance, audits)** → Sequential pipeline with fixed stages.
-- **Triage or branching by topic** → Conditional routing.
+- **Single domain, need routing** → 6.1 Agent as Tools (orchestrator picks specialist).
+- **Open-ended, collaborative task** → 6.2 Swarm (agents hand off as needed).
+- **Fixed, auditable pipeline** → 6.3 Graph-Based (explicit DAG).
+- **Research or fact-check with fixed steps** → 6.4 Workflow Agent (sequential + conditional).
 
 ## Best Practices
 
-- Give each specialist agent a **narrow, clear system prompt** so it stays on task.
-- When using agents as tools, write **precise tool descriptions** so the caller agent knows when to invoke each specialist.
-- Keep **orchestrator logic simple**: if the “router” or “supervisor” becomes too complex, consider splitting or simplifying.
-- Reuse **session or conversation context** when passing work between agents so the next agent has enough background.
+- **Clear roles:** One main responsibility per agent; avoid overlap.
+- **Tool docstrings (6.1):** Describe when the orchestrator should call each tool.
+- **Handoff protocol (6.2):** Keep format simple and document it in agent prompts.
+- **Graph design (6.3):** Prefer acyclic dependencies; add entry point and timeouts if you extend.
+- **Context (6.4):** Pass full prior output into the next agent so the workflow stays coherent.
+
+## Troubleshooting
+
+- **Orchestrator not calling the right tool (6.1):** Tighten the orchestrator system prompt and tool docstrings.
+- **Swarm loops or no handoff (6.2):** Check for `HANDOFF:agent_id:message` in prompts; reduce `max_handoffs` if it loops.
+- **Graph order wrong (6.3):** Verify edges and entry point; ensure no cycles.
+- **Wrong workflow branch (6.4):** Adjust the condition in `run_workflow()` (e.g. “fact-check”, “Claim:”) to match your use case.
 
 ## Further Learning
 
@@ -129,4 +193,4 @@ Details and one-shot vs interactive usage are in each sub-lesson section below.
 
 | Previous | Next |
 |----------|------|
-| [Lesson 5: Human-in-the-Loop](../lesson5_human_in_the_loop/README.md) | Sub-lesson 6.1 (Supervisor & workers) |
+| [Lesson 5: Human-in-the-Loop](../lesson5_human_in_the_loop/README.md) | Sub-lesson 6.1 (Agent as Tools) |

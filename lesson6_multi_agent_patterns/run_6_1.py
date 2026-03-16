@@ -1,21 +1,25 @@
 """
-Lesson 6.1: Run supervisor & workers demo.
+Lesson 6.1: Agent as Tools — run orchestrator.
 
 Usage:
-  python run_supervisor_workers.py              # interactive loop
-  python run_supervisor_workers.py "Your question"   # one-shot
+  python run_6_1.py                    # interactive
+  python run_6_1.py "Your question"   # one-shot
 """
 
 import sys
-from supervisor_agent import run_supervisor_workers
+
+from agent_as_tools import create_orchestrator_agent
+
 
 def main() -> None:
+    agent = create_orchestrator_agent()
+
     if len(sys.argv) > 1:
         query = " ".join(sys.argv[1:])
-        print("Answer:", run_supervisor_workers(query))
+        print("Answer:", agent(query))
         return
 
-    print("Lesson 6.1: Supervisor & workers. Ask anything; the coordinator will use researcher then writer.")
+    print("Lesson 6.1: Agent as Tools. Orchestrator routes to Research / Product / Travel assistants.")
     print("Type 'quit' or 'exit' to stop.\n")
     while True:
         try:
@@ -27,8 +31,8 @@ def main() -> None:
         if user.lower() in ("quit", "exit", "q"):
             break
         print("Thinking...")
-        answer = run_supervisor_workers(user)
-        print("Answer:", answer, "\n")
+        print("Answer:", agent(user), "\n")
+
 
 if __name__ == "__main__":
     main()
