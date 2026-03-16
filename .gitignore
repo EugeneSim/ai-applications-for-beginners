@@ -1,5 +1,6 @@
 # =============================================================================
-# SECRETS — Never commit. Only .env.example (no real keys) may be tracked.
+# SECRETS — Safe for public GitHub. Only .env.example (placeholders) is tracked.
+# Never commit: .env, real API keys, or credentials. Do not force-add ignored files.
 # =============================================================================
 .env
 .env.*
@@ -11,8 +12,11 @@
 .env.bak
 *.pem
 *.key
+*.pem.*
 secrets/
 config.local.*
+credentials.json
+*.credentials
 
 # Python
 __pycache__/
@@ -53,3 +57,6 @@ Thumbs.db
 # Local / debug
 *.log
 .cache/
+
+# Lesson 2: file-based session storage (optional)
+lesson2_sessions_state/sessions/
