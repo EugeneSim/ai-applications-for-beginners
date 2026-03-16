@@ -1,0 +1,5 @@
+# AWS Strands SDK with LiteLLM and OpenTelemetry (for Langfuse OTLP export)
+strands-agents[litellm,otel]>=0.1.0
+
+# Load .env from repo root
+python-dotenv>=1.0.0
